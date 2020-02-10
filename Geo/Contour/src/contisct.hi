@@ -1,0 +1,346 @@
+/* ---------------------------------------------------------------------- */
+/* ---------------- Element Lists & Closed/Open Contours ---------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* -------------------- Copyright Alcoa Drunen NL, Oct 1996 ------------- */
+/* ---------------------------- (Inofor Hoek Aut BV, C. Wolters) -------- */
+/* ---------------------------------------------------------------------- */
+
+// $Id: contisct.hi,v 1.2 2009/03/06 10:40:30 clemens Exp $
+
+#ifndef INT_SECT_INC
+#define INT_SECT_INC
+
+// #define DEBUG_PRINT
+
+#include "Contour.h"
+
+#include <stdio.h>
+
+namespace Ino
+{
+
+typedef Cont_D_List::Cursor      Cont_Cursor;
+typedef Cont_Nest_D_List::Cursor Cont_Nest_Cursor;
+typedef Cont_Clsd_D_List::Cursor Cont_Clsd_Cursor;
+
+// Tijdelijk;
+
+extern const Vec2& Last_Gap();
+
+/* ---------------------------------------------------------------------- */
+/* ------- Contour Reference Lists -------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+struct Cont_Ref
+{
+  const Contour& Cont;
+  int   Isect_Count;
+  bool  To_Left;
+  bool  Ccw;
+  Cont_Ref *Colinear;
+
+  Cont_Ref(const Contour& cnt, bool ccw = true);
+  Cont_Ref(const Cont_Ref& cp);
+
+  Cont_Ref& operator=(const Cont_Ref& src);   // Do NOT USE!!!!!
+};
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+typedef IT_Chain_Alloc<IT_D_Item<Cont_Ref> > Cont_Ref_Alloc;
+
+typedef IT_D_List<Cont_Ref,Cont_Ref_Alloc> Cont_Ref_D_List;
+typedef Cont_Ref_D_List::C_Cursor Cont_Ref_C_Cursor;
+typedef Cont_Ref_D_List::Cursor Cont_Ref_Cursor;
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont_Ref_List : public Cont_Ref_D_List
+{
+  enum reftype { ref_contour, ref_contclsd, ref_contnest, ref_contarea };
+
+  const Cont_Clsd *contclsd;
+  const Cont_Nest *contnest;
+  const Cont_Area *contarea;
+
+  reftype   kind;
+ public:
+  Cont_Ref_List(const Contour& cnt);
+  Cont_Ref_List(const Cont_Clsd& cnt);
+  Cont_Ref_List(const Cont_Nest& nst);
+  Cont_Ref_List(const Cont_Area& ar);
+
+  void Isect_Count_All(int val);
+
+  bool Closed() const;
+
+  void Determine_Pos_In_List(Cont_Ref_List& otherlist);
+};
+
+/* ---------------------------------------------------------------------- */
+/* ------- Contour Intersection Point ----------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont_Isect_Cursor;
+
+class Cont_Isect
+{
+  public:
+   enum Rel_Dir { tang, a_tang, left, right };
+
+   Cont_Isect& operator=(const Cont_Isect& /*src*/)
+                               { return *this; }       // DO NOT USE!!!
+   Cont_Isect(const Cont_Isect& cp);                   // DO NOT USE!!!
+
+   int id_no;
+   
+   bool To_Left;
+
+   Cont_Pnt Pnt;
+   Cont_Ref *Cont;
+
+   Rel_Dir arrive, depart;
+   Cont_Pnt St_Pt, End_Pt;   // Start/end point of analysis range
+
+   Cont_Isect_Cursor& Other; // Cant be cursor itself (circular def!)
+
+   bool Mark;
+   bool Mark_Arrive, Mark_Depart;
+   bool Full_Range_Arrive, Full_Range_Depart;
+
+   Cont_Isect(Cont_Ref *cntref, const Cont_Pnt& p);
+   ~Cont_Isect();
+
+   void Set_To_Left();
+   
+   void Eval_Sides();
+   void Eval2_Sides();
+
+   bool In_Range() const;
+
+   bool Near_Elem_Start() const; // Is intersection near beginof elem?
+   bool Near_Elem_End() const;
+   
+   friend class Contour;
+};
+
+/* ---------------------------------------------------------------------- */
+/* ------- Intersection List -------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+typedef IT_Chain_Alloc<IT_D_Item<Cont_Isect> > Cont_Isect_Alloc;
+typedef IT_D_List<Cont_Isect, Cont_Isect_Alloc> Cont_Isect_D_List;
+typedef IT_D_C_Cursor<Cont_Isect, Cont_Isect_Alloc> Cont_Isect_D_C_Cursor;
+typedef IT_D_Cursor<Cont_Isect, Cont_Isect_Alloc> Cont_Isect_D_Cursor;
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont_Isect_Cursor: public Cont_Isect_D_Cursor
+{
+  public:
+   Cont_Isect_Cursor()                     : Cont_Isect_D_Cursor() {}
+
+   Cont_Isect_Cursor& operator=(const Cont_Isect_D_Cursor& src)
+               { Cont_Isect_D_Cursor::operator=(src); return *this; }
+
+   void *operator new(size_t sz);
+   void  operator delete(void *oc);
+};
+
+/* ---------------------------------------------------------------------- */
+/* ------- Comparator --------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont_Isect_Cmp
+{
+ public:
+  static int Compare(const Cont_Isect& i1, const Cont_Isect& i2);
+};
+
+/* ---------------------------------------------------------------------- */
+/* -------- Single Intersection List (for Offsets) ---------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont1_Isect_List
+{
+    Cont_Isect_D_List ilist;
+
+    bool left;
+
+    Cont_Ref      *offsetref;
+
+    Cont_Ref_List *rlist;
+
+    void unmark();
+    void delete_marked();
+
+    void unmark_arrive_depart();
+
+    void delete_phantom_intersections();
+    void delete_identical(double tol);
+    void sort_offset_coincident();
+
+    static bool find_rel_pos_arrive(const Cont_PPair& p1,
+                                    double isp_par,
+                                    const Cont_PPair& p2,
+                                    double tol,
+                                    Cont_Isect::Rel_Dir& dir);
+
+    static bool find_rel_pos_depart(const Cont_PPair& p1,
+                                    double isp_par,
+                                    const Cont_PPair& p2,
+                                    double tol,
+                                    Cont_Isect::Rel_Dir& dir);
+
+    static bool set_analysis_range_before(const Cont_Isect_D_Cursor& isc);
+    static bool set_analysis_range_after(const Cont_Isect_D_Cursor& isc);
+   
+    static void analyze_arrive(FILE *fd,int il,const Cont_Isect_D_Cursor& isc);
+    static void analyze_depart(FILE *fd,int il,const Cont_Isect_D_Cursor& isc);
+
+    void analyze_tangent_stretches(FILE *fd, double minlen);
+
+    void set_to_left();
+    
+    void special_offset_analyze();
+    void cleanup_self(bool closed, bool make_consistent);
+
+    void remove_non_crossing();
+
+    void intersect_el(Cont_Ref& cntref,
+                      const Elem_Cursor& elc1,
+                      const Elem_Cursor& elc2, double parlen);
+
+    void intersect_xy(Cont_Ref& cntref, bool one_only = false);
+
+    static bool analyze_contiguous(const Cont_Clsd& org,
+                                   double offdist,
+                                   Cont_Isect_Cursor& isc,
+                                   Contour& newpiece);
+
+    bool compile_closed_cont(double tol, Cont_Clsd& cnt);
+
+    bool get_contiguous_piece(const Cont_Isect_Cursor& isc,
+                               double tol, Contour& newpiece);
+
+    Cont1_Isect_List(const Cont1_Isect_List& cp);
+    Cont1_Isect_List& operator=(const Cont1_Isect_List& src);
+
+  public:
+    Cont1_Isect_List(Cont_Ref& cntref, bool one_only = true);
+    Cont1_Isect_List(Cont_Ref& cntref, bool closed, bool go_left,
+		                                                      bool make_consistent=true);
+
+    const Cont_Isect_D_List& List() const { return ilist; }
+    
+    bool Empty() const { return ilist.Length() < 1; }
+
+    static void Advance(Cont_Isect_D_Cursor& isc);
+    static void Backup(Cont_Isect_D_Cursor& isc);
+
+    void Check_Against_Cont(const Cont_Clsd& org_cont, double offdist);
+ 
+    void Intersections_Into(Cont_PPair_List& pplist);
+
+    void Extract_Closed(Cont_Clsd_D_List& cnt_list);
+
+    void Extract_Offset_Open(Cont_D_List& cnt_list);
+
+    void Extract_Offset_Closed(const Cont_Clsd& org, double offdist,
+                                             Cont_Clsd_D_List& cnt_list);
+    bool Extract_Offset_Closed_Special(double tol,
+                                             Cont_Clsd_D_List& cnt_list);
+};
+
+/* ---------------------------------------------------------------------- */
+/* -------- Double Intersection List (For Combine Operations) ----------- */
+/* ---------------------------------------------------------------------- */
+
+class Cont2_Isect_List
+{
+    Cont_Isect_D_List ilist1;
+    Cont_Isect_D_List ilist2;
+
+    bool left;
+
+    bool rev1, rev2;
+
+    Cont_Ref      *offsetref;
+
+    Cont_Ref_List *rlist1;
+    Cont_Ref_List *rlist2;
+
+    void unmark();
+    void delete_marked();
+
+    void unmark_arrive_depart();
+
+    void project_range(const Cont_PPair& r, bool ccw,
+                       const Cont_Clsd& cont,
+                       const Cont_Pnt& p1, const Cont_Pnt& p2,
+                       bool full_range, double tol, Cont_Isect::Rel_Dir& dir);
+
+    void analyze_arrive(const Cont_Isect_D_Cursor& isc, double tol);
+    void analyze_depart(const Cont_Isect_D_Cursor& isc, double tol);
+    
+    void analyze_tangent(const Cont_Isect_D_Cursor& isc);
+
+    void analyze_tangent_stretches(FILE *fd, double minlen);
+    void remove_non_crossing();
+    void cleanup();
+
+    void set_to_left();
+    
+    void intersect_el(Cont_Ref& cntref1, Cont_Ref& cntref2,
+                      const Elem_Cursor& elc1,
+                      const Elem_Cursor& elc2);
+
+    void intersect_xy(Cont_Ref& cntref1, Cont_Ref& cntref2,
+                                                 bool one_only = false);
+
+    void collect_non_intersecting(Cont_Clsd_D_List& cnt_list,
+                                  Cont_D_List *rest1,
+                                  Cont_D_List *rest2) const;
+
+    void extract_combine(Cont_Clsd_D_List& cnt_list);
+    void extract_comb_rest(Cont_D_List *cnt_list1,
+                           Cont_D_List *cnt_list2);
+
+    Cont2_Isect_List(const Cont2_Isect_List& cp);
+    Cont2_Isect_List& operator=(const Cont2_Isect_List& src);
+
+  public:
+    Cont2_Isect_List(Cont_Ref_List& lst1, bool rev_1,
+                       Cont_Ref_List& lst2, bool rev_2,
+                                  bool go_left, bool must_cleanup = true);
+
+    const Cont_Isect_D_List& List1() const { return ilist1; }
+    const Cont_Isect_D_List& List2() const { return ilist2; }
+    
+    bool Empty() const { return ilist1.Length() < 1; }
+
+    static void Advance(Cont_Isect_D_Cursor& isc);
+    static void Advance_Both(Cont_Isect_D_Cursor& isc);
+
+    static void Backup(Cont_Isect_D_Cursor& isc);
+    static void Backup_Both(Cont_Isect_D_Cursor& isc);
+
+    void Intersections_Into(Cont_PPair_List& pplist);
+
+    void Extract_Combine(Cont_Clsd_D_List& cnt_list,
+                         Cont_D_List *rest1, Cont_D_List *rest2);
+};
+
+} // namespace Ino
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+#endif

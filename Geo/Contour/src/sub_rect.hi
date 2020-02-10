@@ -1,0 +1,89 @@
+/* ---------------------------------------------------------------------- */
+/* ---------------- Subcontour Rectangle Lists -------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* -------------------- Copyright Alcoa Drunen NL, Oct 1996 ------------- */
+/* ---------------------------- (Inofor Hoek Aut BV, C. Wolters) -------- */
+/* ---------------------------------------------------------------------- */
+
+// $Id: sub_rect.hi,v 1.1 2008/10/16 09:10:57 clemens Exp $
+
+#ifndef SUBRECT_INC
+#define SUBRECT_INC
+
+#include "Rect.h"
+#include "Elem.h"
+
+namespace Ino
+{
+
+extern const double Sub_Rect_Project_Tol;
+
+/* ---------------------------------------------------------------------- */
+/* ------- Subrectangle for contour ------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Sub_Rect
+{
+   Rect_Ax sub_rect;
+   Elem_Cursor upto_el;     // Rectangle applies to elements upto and
+                            // NOT including this one
+ public:
+
+   Sub_Rect(const Rect_Ax& rct, const Elem_Cursor& upto);
+
+   Sub_Rect(const Sub_Rect& cp);
+
+   Sub_Rect& operator=(const Sub_Rect& src);
+
+   const Rect_Ax&     Rect;
+   const Elem_Cursor& Upto;
+};
+
+/* ---------------------------------------------------------------------- */
+/* ------- Sub_Rect List Typedefs --------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+typedef IT_Chain_Alloc<IT_D_Item<Sub_Rect> > Sub_Rect_Alloc;
+typedef IT_D_List<Sub_Rect,Sub_Rect_Alloc> Sub_Rect_List;
+typedef Sub_Rect_List::C_Cursor Sub_Rect_C_Cursor;
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+class Elem_Rect_List : Sub_Rect_List
+{
+  Elem_List& el_list;
+
+  bool nearest_rect_to(const Vec2& p, Sub_Rect_C_Cursor& nrc,
+                                             Elem_Cursor& fst_el) const;
+
+  Elem_Rect_List(const Elem_Rect_List& cp); // No copying
+
+  Elem_Rect_List& operator=(const Elem_Rect_List& src); // No assignment
+
+ public:
+   Elem_Rect_List(Elem_List& elem_list, int max_elems, double max_area);
+
+   Sub_Rect_C_Cursor Begin() const { return Sub_Rect_C_Cursor(*this); }
+
+   bool Find_Elem_At_Par(double par, Elem_C_Cursor& elc) const;
+   bool Find_Elem_At_Par(double par, Elem_Cursor& elc) const;
+
+   bool Project_Pnt_XY(const Vec2& p, Elem_Cursor& nel,
+                          Vec3& pp, double& parm, double& dist_xy) const;
+
+   bool Project_Pnt_XY(const Vec2& p,
+                       double begin_par,
+                       double end_par,
+                       Elem_Cursor& nel,
+                       Vec3& pp, double& parm, double& dist_xy) const;
+};
+
+} // namespace Ino
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+#endif

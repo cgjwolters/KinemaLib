@@ -1,0 +1,98 @@
+/* ---------------------------------------------------------------------- */
+/* ---------------- Element Lists & Closed/Open Contours ---------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------- Panic Handler --------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* -------------------- Copyright Alcoa Drunen NL, Oct 1996 ------------- */
+/* ---------------------------- (Inofor Hoek Aut BV, C. Wolters) -------- */
+/* ---------------------------------------------------------------------- */
+
+// $Id: cntpanic.hi,v 1.1 2008/10/16 09:10:57 clemens Exp $
+
+#ifndef CNTPANIC_INC
+#define CNTPANIC_INC
+
+namespace Ino
+{
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+const int SubRect_Project_No_Elem       =   1;
+const int SubRect_No_Nearest_Rect       =   2;
+
+const int Drill_Cant_Find_Pnt           =   201;
+
+const int Cont_Cant_Find_Pnt_Elem       =   301;
+const int Cont_Cant_Sort_Contours       =   302;
+const int Cont_Large_Join_Gap           =   303;
+const int Cont_Large_Connect_Gap        =   304;
+const int Cont_Large_Check_Gap          =   305;
+const int Cont_List_Cant_Project        =   306;
+const int Cont_Nest_Cant_Project        =   307;
+const int Cont_Nest_Cant_Offset         =   308;
+const int Cont_Area_Cant_Project        =   309;
+const int Cont_Area_Cant_Offset         =   310;
+const int Cont_Area_Cant_Extract        =   311;
+
+const int Cont_Mill_Cant_Project        =   401;
+const int Cont_Mill_Illegal_Cont_Pnt    =   402;
+const int Cont_Mill_Compare_Error       =   403;
+const int Cont_Mill_No_Elem_Project     =   404;
+const int Cont_Mill_Gen_Error           =   405;
+const int Cont_Mill_Data_Gone           =   406;
+const int Cont_Mill_Long_Lead_In        =   407;
+const int Cont_Mill_Run_Away            =   408;
+const int Cont_Mill_No_Lead_In          =   409;
+
+const int ContIsect_Odd_Intersect       =   501;
+const int ContIsect_Nill_Cursor         =   502;
+const int ContIsect_Tang_Antitang       =   503;
+const int ContIsect_Cant_Project        =   504;
+
+const int Cont_Final_Cant_Project       =   701;
+const int Cont_Final_Cant_Offset_Back   =   702;
+
+const int Conti_Cant_Project            =   801;
+const int Conti_No_Midpoint             =   802;
+
+const int Elem_Large_Stretch            =   901;
+
+const int Cont_Prism_Incomplete         =  1001;
+const int Cont_Prism_Cant_Extract       =  1002;
+const int Cont_Prism_Cant_Find_Tool     =  1003;
+const int Cont_Prism_Cant_Copy_Rules    =  1004;
+const int Cont_Prism_Rules_Ident        =  1005;
+const int Cont_Prism_No_Tangent         =  1006;
+
+const int Cont_NcTask_Empty_Job         =  1101;
+const int Cont_NcTask_Cant_Project      =  1102;
+const int Cont_NcTask_Cant_Extend       =  1103;
+const int Cont_NcTask_No_Avail_Jobs     =  1104;
+
+const int Cont_NcJob_Cant_Project       =  1301;
+const int Cont_NcJob_Illegal_Cont_Pnt   =  1302;
+const int Cont_NcJob_Found_All_Closed   =  1303;
+const int Cont_NcJob_No_Closed_Leadin   =  1304;
+const int Cont_NcJob_Cant_Find_Job      =  1305;
+const int Cont_NcJob_Cant_Start_At      =  1306;
+const int Cont_NcJob_Ill_Cursor         =  1307;
+const int Cont_NcJob_No_Avail_Jobs      =  1308;
+const int Cont_NcJob_Cant_Find_Cover    =  1309;
+const int Cont_NcJob_No_Par_Dist        =  1310;
+const int Cont_NcJob_No_Stock_Left      =  1311;
+const int Cont_NcJob_Wrong_Drill_Pnt    =  1312;
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+
+extern void Cont_Panic(int error_no); // Calls exit()
+
+} // namespace Ino
+
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
+#endif
