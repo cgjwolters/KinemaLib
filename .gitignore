@@ -1,0 +1,10 @@
+*.obj
+*.sbr
+*.pdb
+*.idb
+*.bsc
+*.dsp
+*.dsw
+*.ncb
+*.suo
+
