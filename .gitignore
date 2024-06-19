@@ -7,7 +7,6 @@
 *.dsw
 *.ncb
 *.suo
-
 InoforLibs/.vs/InoforLibs/v17/Solution.VC.db
 InoforLibs/Backup/InoforLibs.sln
 lib/1.0/Basics-mt-d.lib
